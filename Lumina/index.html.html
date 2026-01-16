@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumina Shabu - Order System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --primary: #89CFF0; --bg: #F4F9FF; --text: #333; --accent: #FF6B6B; --line: #06C755; --success: #28a745; }
+        body { font-family: 'Kanit', sans-serif; margin: 0; padding: 0; background-color: var(--bg); color: var(--text); }
+        .hidden { display: none !important; }
+        .container { max-width: 500px; margin: 0 auto; padding: 20px; min-height: 100vh; background: white; box-shadow: 0 0 20px rgba(0,0,0,0.1); position: relative; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 25px; cursor: pointer; font-size: 1.1rem; font-family: 'Kanit'; transition: 0.2s; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
+        .btn-primary { background-color: var(--primary); color: white; font-weight: bold; }
+        .btn-danger { background-color: var(--accent); color: white; }
+        .btn-small { width: auto; padding: 5px 12px; font-size: 0.8rem; margin: 0; }
+        #page-cover { background-color: #bce6ff; height: 100vh; padding: 0; position: relative; overflow: hidden; }
+        #page-cover img { width: 100%; height: 100%; object-fit: cover; }
+        .start-btn-container { position: absolute; bottom: 80px; width: 100%; text-align: center; padding: 0 20px; box-sizing: border-box; }
+        .login-box { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-top: 20px; }
+        .form-group { margin-bottom: 12px; text-align: left; }
+        .form-group input { width: 93%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Kanit'; }
+        .menu-card { border: 1px solid #eee; border-radius: 12px; padding: 15px; margin-bottom: 15px; background: white; cursor: pointer; position: relative; }
+        .price-tag { background: var(--primary); color: white; padding: 4px 10px; border-radius: 15px; position: absolute; top: 10px; right: 10px; font-weight: bold; }
+        .addon-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f8f8f8; }
+        .qty-control { display: flex; align-items: center; gap: 12px; }
+        .qty-btn { width: 32px; height: 32px; border-radius: 50%; border: none; background: #f0f0f0; cursor: pointer; font-size: 1.2rem; }
+        .qty-btn.active { background: var(--primary); color: white; }
+        .admin-card { background: white; border: 1px solid #eee; padding: 12px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid #ccc; }
+        .admin-card.done { border-left-color: var(--success); background: #f6fff8; opacity: 0.7; }
+    </style>
+</head>
+<body>
+
+    <div id="page-cover" class="container" style="max-width: 100%;">
+        <img src="focusLumi.jpg" alt="Lumina Shabu Cover" onerror="this.src='https://placehold.co/400x600/89CFF0/white?text=Lumina+Shabu';"> 
+        <div class="start-btn-container">
+            <button class="btn btn-primary" onclick="checkLoginSession()">✨ เริ่มสั่งอาหารเลย ✨</button>
+        </div>
+    </div>
+
+    <div id="page-login" class="container hidden">
+        <h2 style="text-align:center; color: var(--primary);">เข้าสู่ระบบ</h2>
+        <div class="login-box">
+            <div class="form-group"><label>ชื่อเล่น - ชื่อจริง</label><input type="text" id="login-name" placeholder="ระบุชื่อ"></div>
+            <div class="form-group"><label>ชั้น (เช่น ม.3/1)</label><input type="text" id="login-class" placeholder="ระบุชั้น"></div>
+            <div class="form-group"><label>เบอร์โทร</label><input type="tel" id="login-phone" placeholder="ระบุเบอร์โทร"></div>
+            <div class="form-group"><label>รหัสแอดมิน (ถ้ามี)</label><input type="password" id="login-code" placeholder="ใส่ Code เฉพาะเจ้าของร้าน" autocomplete="off"></div>
+            <button class="btn btn-primary" onclick="handleLogin()">เข้าสู่ระบบ</button>
+        </div>
+    </div>
+
+    <div id="page-menu" class="container hidden">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <img src="luonnotar.jpg" style="width:45px; height:45px; border-radius:50%; border:2px solid pink; object-fit:cover;" onerror="this.style.opacity='0'">
+            <h3 style="margin:0;">Lumina Shabu</h3>
+            <img src="columbina.jpg" style="width:45px; height:45px; border-radius:50%; border:2px solid pink; object-fit:cover;" onerror="this.style.opacity='0'">
+        </div>
+        <div style="background:#e8f4fd; padding:10px; border-radius:10px; font-size:0.85rem; margin:15px 0; display:flex; justify-content:space-between; align-items:center;">
+            <span><i class="fas fa-user-circle"></i> <b id="display-user"></b></span>
+            <button class="btn btn-danger btn-small" onclick="logout()">Logout</button>
+        </div>
+        <div style="background:#fcfcfc; border:1px solid #eee; padding:15px; border-radius:12px; margin-bottom:15px;">
+            <h4>1. เลือกซุป</h4>
+            <label><input type="radio" name="soup" value="Black" checked onchange="updatePrice()"> น้ำดำ (ฟรี)</label>
+            <label style="margin-left:10px;"><input type="radio" name="soup" value="Mala" onchange="updatePrice()"> หมาล่า (+15.-)</label>
+            <h4 style="margin:15px 0 10px 0;">2. การรับประทาน</h4>
+            <label><input type="radio" name="type" value="Mixed" checked> รวมน้ำ</label>
+            <label style="margin-left:10px;"><input type="radio" name="type" value="Separate"> แยกน้ำ</label>
+        </div>
+        <div class="menu-card" onclick="selectSet('SET A', 35)"><span class="price-tag">35.-</span><b>SET A: อิ่มประหยัด</b></div>
+        <div class="menu-card" onclick="selectSet('SET B', 45)"><span class="price-tag">45.-</span><b>SET B: หมูจุกๆ</b></div>
+        <div class="menu-card" onclick="selectSet('SET C', 55)"><span class="price-tag">55.-</span><b>SET C: สเปเชียลชีส</b></div>
+        <button id="btn-admin-panel" class="btn hidden" style="background:#333; color:white; margin-top:20px;" onclick="goToPage('page-admin')">แผงควบคุมแอดมิน</button>
+    </div>
+
+    <div id="page-addons" class="container hidden">
+        <button class="btn btn-small" style="background:#ddd;" onclick="goToPage('page-menu')"><i class="fas fa-chevron-left"></i> กลับ</button>
+        <h3 id="txt-current-set" style="text-align:center; margin-top:10px;"></h3>
+        <div id="addon-list" style="margin-bottom: 110px;"></div>
+        <div style="position:fixed; bottom:0; left:0; width:100%; background:white; padding:15px; box-shadow:0 -5px 15px rgba(0,0,0,0.1); text-align:center;">
+            <div style="font-size:1.2rem; margin-bottom:10px;">ยอดรวม: <span id="val-total" style="color:var(--primary); font-weight:bold;">0</span> ฿</div>
+            <button class="btn btn-primary" onclick="goToPage('page-checkout')">ถัดไป <i class="fas fa-chevron-right"></i></button>
+        </div>
+    </div>
+
+    <div id="page-checkout" class="container hidden">
+        <button class="btn btn-small" style="background:#ddd;" onclick="goToPage('page-addons')">แก้ไข</button>
+        <div id="bill-details" style="margin-top:20px; padding:15px; border:1px dashed #ccc; border-radius:10px;"></div>
+        <div style="text-align:center; margin:15px 0;">
+            <img src="qrcode.jpg" style="width:180px;" onerror="this.src='https://placehold.co/180?text=QR+Code'">
+            <p style="font-size:0.8rem; color:#888;">สแกนเพื่อจ่ายเงิน</p>
+        </div>
+        <button class="btn btn-line" style="background:#06C755; color:white;" onclick="confirmAndSendLine()"><i class="fab fa-line"></i> ส่งออเดอร์ไปที่ LINE</button>
+    </div>
+
+    <div id="page-admin" class="container hidden">
+        <button class="btn btn-small" style="background:#ddd;" onclick="goToPage('page-menu')">กลับ</button>
+        <h3>แอดมิน - จัดการออเดอร์</h3>
+        <div style="background:#333; color:white; padding:10px; border-radius:8px; margin-bottom:15px; display:flex; justify-content:space-around; text-align:center;">
+            <div><small>ออเดอร์</small><br><b id="admin-count">0</b></div>
+            <div><small>ยอดขาย</small><br><b id="admin-income">0</b> ฿</div>
+        </div>
+        <div style="background:#eee; padding:10px; border-radius:8px; margin-bottom:20px;">
+            <div style="display:flex; flex-direction:column; gap:8px;">
+                <div style="display:flex; gap:5px;">
+                    <input type="text" id="adm-in-name" placeholder="ชื่อลูกค้า" style="flex:2; padding:8px; border-radius:5px; border:1px solid #ccc;">
+                    <input type="number" id="adm-in-price" placeholder="บาท" style="flex:1; padding:8px; border-radius:5px; border:1px solid #ccc;">
+                </div>
+                <input type="text" id="adm-in-note" placeholder="รายละเอียด (เช่น ไม่ผัก, นัดรับบ่าย)" style="padding:8px; border-radius:5px; border:1px solid #ccc;">
+                <button class="btn btn-primary btn-small" onclick="adminAddOrder()">จดออเดอร์</button>
+            </div>
+        </div>
+        <div id="admin-list-display"></div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let cart = { set: '', price: 0, soup: 'Black', sPrice: 0, type: 'Mixed', addons: {} };
+        const addonData = [
+            { id: 'egg', n: 'ไข่ไก่', p: 5 }, { id: 'sausage', n: 'ไส้กรอก', p: 10 },
+            { id: 'tofu', n: 'เต้าหู้ชีส', p: 15 }, { id: 'crab', n: 'ปูอัด', p: 10 },
+            { id: 'shrimp', n: 'กุ้ง', p: 15 }, { id: 'pork', n: 'หมูสับ', p: 15 },
+            { id: 'slice', n: 'หมูสไลด์', p: 15 }, { id: 'belly', n: 'สามชั้น', p: 15 }
+        ];
+
+        function goToPage(id) {
+            document.querySelectorAll('.container').forEach(c => c.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            if(id === 'page-addons') renderAddons();
+            if(id === 'page-checkout') renderBill();
+            if(id === 'page-admin') renderAdmin();
+            window.scrollTo(0,0);
+        }
+
+        function checkLoginSession() { currentUser ? goToPage('page-menu') : goToPage('page-login'); }
+
+        function handleLogin() {
+            const name = document.getElementById('login-name').value;
+            const cls = document.getElementById('login-class').value;
+            const code = document.getElementById('login-code').value;
+            if(!name || !cls) return alert('ใส่ชื่อและชั้นเรียนด้วยจ้า');
+            currentUser = { name, class: cls, role: (code === 'Luonnotar' ? 'admin' : 'user') };
+            document.getElementById('display-user').innerText = name + ` (${cls})`;
+            if(currentUser.role === 'admin') document.getElementById('btn-admin-panel').classList.remove('hidden');
+            document.getElementById('login-code').value = '';
+            goToPage('page-menu');
+        }
+
+        function logout() { currentUser = null; goToPage('page-login'); }
+
+        function selectSet(n, p) {
+            cart.set = n; cart.price = p;
+            addonData.forEach(a => cart.addons[a.id] = 0);
+            updatePrice();
+            document.getElementById('txt-current-set').innerText = n + ` (${p}.-)`;
+            goToPage('page-addons');
+        }
+
+        function updatePrice() {
+            const sVal = document.querySelector('input[name="soup"]:checked').value;
+            cart.soup = sVal; cart.sPrice = (sVal === 'Mala' ? 15 : 0);
+            cart.type = document.querySelector('input[name="type"]:checked').value;
+            calcTotal();
+        }
+
+        function renderAddons() {
+            const list = document.getElementById('addon-list');
+            list.innerHTML = '';
+            addonData.forEach(a => {
+                const qty = cart.addons[a.id] || 0;
+                list.innerHTML += `<div class="addon-item"><div><b>${a.n}</b> <small>(+${a.p}฿)</small></div><div class="qty-control"><button class="qty-btn" onclick="changeQty('${a.id}', -1)">-</button><b style="width:20px;text-align:center;">${qty}</b><button class="qty-btn active" onclick="changeQty('${a.id}', 1)">+</button></div></div>`;
+            });
+            calcTotal();
+        }
+
+        function changeQty(id, delta) { cart.addons[id] = Math.max(0, (cart.addons[id] || 0) + delta); renderAddons(); }
+
+        function calcTotal() {
+            let total = cart.price + cart.sPrice;
+            addonData.forEach(a => total += (cart.addons[a.id] || 0) * a.p);
+            if(document.getElementById('val-total')) document.getElementById('val-total').innerText = total;
+            return total;
+        }
+
+        function renderBill() {
+            const total = calcTotal();
+            let html = `<b>${cart.set}</b> - ${cart.price}฿<br><small>ซุป: ${cart.soup=='Mala'?'หมาล่า':'น้ำดำ'} / แบบ: ${cart.type=='Mixed'?'รวม':'แยก'}</small><hr>`;
+            addonData.forEach(a => { if(cart.addons[a.id] > 0) html += `<div style="display:flex; justify-content:space-between; font-size:0.9rem;"><span>+ ${a.n} x${cart.addons[a.id]}</span><span>${a.p * cart.addons[a.id]}฿</span></div>`; });
+            html += `<hr><div style="display:flex; justify-content:space-between; font-weight:bold; color:var(--primary);"><span>รวมสุทธิ</span><span>${total} บาท</span></div>`;
+            document.getElementById('bill-details').innerHTML = html;
+        }
+
+        function confirmAndSendLine() {
+            let message = `🛒 *ออเดอร์ใหม่!* \nคุณ: ${currentUser.name} (${currentUser.class})\n------------------\nเมนู: ${cart.set}\nซุป: ${cart.soup=='Mala'?'หมาล่า':'น้ำดำ'} / ${cart.type=='Mixed'?'รวมน้ำ':'แยกน้ำ'}\n`;
+            addonData.forEach(a => { if(cart.addons[a.id] > 0) message += `+ ${a.n} x${cart.addons[a.id]}\n`; });
+            message += `------------------\n💰 *ยอดรวม: ${calcTotal()} บาท*\n(แนบสลิปด้านล่างนี้เลยจ้า 👇)`;
+            navigator.clipboard.writeText(message).then(() => {
+                if(confirm('✅ ก๊อปปี้รายการแล้ว! กด OK เพื่อเปิด LINE')) {
+                    window.location.href = "https://line.me/ti/p/~YOUR_LINE_ID"; 
+                }
+            });
+        }
+
+        function adminAddOrder() {
+            const name = document.getElementById('adm-in-name').value;
+            const price = document.getElementById('adm-in-price').value;
+            const note = document.getElementById('adm-in-note').value;
+            if(!name || !price) return alert('กรอกชื่อและราคาด้วยครับ');
+            const order = { id: Date.now(), name, price: parseInt(price), note, status: 'pending' };
+            let orders = JSON.parse(localStorage.getItem('lumina_db_v8') || '[]');
+            orders.push(order);
+            localStorage.setItem('lumina_db_v8', JSON.stringify(orders));
+            document.getElementById('adm-in-name').value = '';
+            document.getElementById('adm-in-price').value = '';
+            document.getElementById('adm-in-note').value = '';
+            renderAdmin();
+        }
+
+        function renderAdmin() {
+            const orders = JSON.parse(localStorage.getItem('lumina_db_v8') || '[]');
+            const display = document.getElementById('admin-list-display');
+            display.innerHTML = '';
+            let income = 0;
+            orders.slice().reverse().forEach(o => {
+                income += o.price;
+                display.innerHTML += `<div class="admin-card ${o.status=='done'?'done':''}">
+                    <div style="display:flex; justify-content:space-between;"><b>${o.name}</b> <span>${o.price} ฿</span></div>
+                    <div style="font-size:0.8rem; color:#666; background:#f9f9f9; padding:5px; margin-top:5px; border-radius:4px;">${o.note?'📝 '+o.note:'-'}</div>
+                    <div style="display:flex; gap:5px; margin-top:10px;"><button class="btn btn-primary btn-small" onclick="adminToggle('${o.id}')">✅</button><button class="btn btn-danger btn-small" onclick="adminDel('${o.id}')">🗑️</button></div>
+                </div>`;
+            });
+            document.getElementById('admin-count').innerText = orders.length;
+            document.getElementById('admin-income').innerText = income;
+        }
+
+        function adminToggle(id) {
+            let orders = JSON.parse(localStorage.getItem('lumina_db_v8') || '[]');
+            const idx = orders.findIndex(o => o.id == id);
+            orders[idx].status = orders[idx].status=='done'?'pending':'done';
+            localStorage.setItem('lumina_db_v8', JSON.stringify(orders));
+            renderAdmin();
+        }
+
+        function adminDel(id) {
+            if(!confirm('ลบออเดอร์นี้?')) return;
+            let orders = JSON.parse(localStorage.getItem('lumina_db_v8') || '[]');
+            orders = orders.filter(o => o.id != id);
+            localStorage.setItem('lumina_db_v8', JSON.stringify(orders));
+            renderAdmin();
+        }
+    </script>
+</body>
+</html>
